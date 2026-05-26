@@ -85,20 +85,32 @@ async def execute_command(request: ExecuteRequest):
         )
 
 @app.post("/upload", summary="Upload a file to the sandbox")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(path: str | None = None, file: UploadFile = File(...)):
     """
     Receives a file and saves it to the /app directory in the sandbox.
+    If path is provided, it is resolved safely and intermediate directories are created.
     """
     try:
-        logging.info(f"--- UPLOAD_FILE CALLED: Attempting to save '{file.filename}' ---")
-        file_path = os.path.join("/app", file.filename)
+        logging.info(f"--- UPLOAD_FILE CALLED: Attempting to save '{file.filename}' with path '{path}' ---")
+        if path is not None:
+            file_path = get_safe_path(path)
+        else:
+            file_path = get_safe_path(file.filename)
+
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
         
         with open(file_path, "wb") as f:
             f.write(await file.read())
             
+        filename_to_return = path if path else file.filename
         return JSONResponse(
             status_code=200,
-            content={"message": f"File '{file.filename}' uploaded successfully."}
+            content={"message": f"File '{filename_to_return}' uploaded successfully."}
+        )
+    except ValueError as e:
+        return JSONResponse(
+            status_code=403,
+            content={"message": f"Access denied: {str(e)}"}
         )
     except Exception as e:
         logging.exception("An error occurred during file upload.") 

@@ -46,6 +46,9 @@ class Filesystem:
         if isinstance(content, str):
             content = content.encode('utf-8')
 
+        # Convert backslashes to forward slashes for cross-platform compatibility.
+        path = path.replace("\\", "/")
+
         # The sandbox runtime uses the multipart ``filename`` field as a
         # relative destination path under its base directory (e.g. /app).
         # ``os.path.join`` on the server will honor absolute paths and
@@ -57,8 +60,10 @@ class Filesystem:
             path = self._safe_upload_path(path)
 
         files_payload = {'file': (path, content)}
-        self.connector.send_request("POST", "upload",
-                      files=files_payload, timeout=timeout)
+        params = {'path': path}
+        self.connector.send_request(
+            "POST", "upload", params=params, files=files_payload, timeout=timeout
+        )
         logging.info(f"File '{path}' uploaded successfully.")
 
     @staticmethod
@@ -99,6 +104,9 @@ class Filesystem:
         allow_unsafe_paths: bool = False,
 
     ) -> bytes:
+        # Convert backslashes to forward slashes for cross-platform compatibility.
+        path = path.replace("\\", "/")
+
         span = trace.get_current_span()
         if span.is_recording():
             span.set_attribute("sandbox.file.path", path)
@@ -118,6 +126,9 @@ class Filesystem:
 
     @trace_span("list")
     def list(self, path: str, timeout: int = 60) -> List[FileEntry]:
+        # Convert backslashes to forward slashes for cross-platform compatibility.
+        path = path.replace("\\", "/")
+
         span = trace.get_current_span()
         if span.is_recording():
             span.set_attribute("sandbox.file.path", path)
@@ -143,6 +154,9 @@ class Filesystem:
 
     @trace_span("exists")
     def exists(self, path: str, timeout: int = 60) -> bool:
+        # Convert backslashes to forward slashes for cross-platform compatibility.
+        path = path.replace("\\", "/")
+
         span = trace.get_current_span()
         if span.is_recording():
             span.set_attribute("sandbox.file.path", path)

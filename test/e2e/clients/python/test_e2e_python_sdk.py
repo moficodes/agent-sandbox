@@ -131,6 +131,17 @@ def run_sdk_tests(sandbox):
     print(f"Read content: '{read_content}'")
     assert read_content == file_content, f"File content mismatch: {read_content}"
 
+    # Test File Write / Read in a nested subdirectory
+    sub_file_content = "This is a nested test file."
+    sub_file_path = "docs/nested_test.txt"
+    print(f"Writing content to '{sub_file_path}'...")
+    sandbox.files.write(sub_file_path, sub_file_content)
+
+    print(f"Reading content from '{sub_file_path}'...")
+    read_sub_content = sandbox.files.read(sub_file_path).decode("utf-8")
+    print(f"Read content: '{read_sub_content}'")
+    assert read_sub_content == sub_file_content, f"Subfolder file content mismatch: {read_sub_content}"
+
 
 def test_python_sdk_router_mode(tc, temp_namespace, sandbox_template, deploy_router):
     """Tests the Python SDK in Sandbox Router (Developer/Tunnel) mode without warmpool."""

@@ -46,6 +46,9 @@ class AsyncFilesystem:
         if isinstance(content, str):
             content = content.encode("utf-8")
 
+        # Convert backslashes to forward slashes for cross-platform compatibility.
+        path = path.replace("\\", "/")
+
         # Use the same hardened sanitizer as the sync twin — rejects
         # empty / bare-'.', embedded NUL and ASCII control characters,
         # and any '..' segment after normalisation. os.path.basename
@@ -55,8 +58,9 @@ class AsyncFilesystem:
         if not allow_unsafe_paths:
             path = Filesystem._safe_upload_path(path)
         files_payload = {"file": (path, content)}
+        params = {"path": path}
         await self.connector.send_request(
-            "POST", "upload", files=files_payload, timeout=timeout
+            "POST", "upload", params=params, files=files_payload, timeout=timeout
         )
         logging.info(f"File '{path}' uploaded successfully.")
 
@@ -67,6 +71,9 @@ class AsyncFilesystem:
         timeout: int = 60,
         allow_unsafe_paths: bool = False,
     ) -> bytes:
+        # Convert backslashes to forward slashes for cross-platform compatibility.
+        path = path.replace("\\", "/")
+
         span = trace.get_current_span()
         if span.is_recording():
             span.set_attribute("sandbox.file.path", path)
@@ -86,6 +93,9 @@ class AsyncFilesystem:
 
     @async_trace_span("list")
     async def list(self, path: str, timeout: int = 60) -> list[FileEntry]:
+        # Convert backslashes to forward slashes for cross-platform compatibility.
+        path = path.replace("\\", "/")
+
         span = trace.get_current_span()
         if span.is_recording():
             span.set_attribute("sandbox.file.path", path)
@@ -117,6 +127,9 @@ class AsyncFilesystem:
 
     @async_trace_span("exists")
     async def exists(self, path: str, timeout: int = 60) -> bool:
+        # Convert backslashes to forward slashes for cross-platform compatibility.
+        path = path.replace("\\", "/")
+
         span = trace.get_current_span()
         if span.is_recording():
             span.set_attribute("sandbox.file.path", path)
